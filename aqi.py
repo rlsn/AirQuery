@@ -1,14 +1,19 @@
+# Copyright (c) 2023 rlsn
+#
+# !pip install seaborn
 import requests
-import sys
+import sys, argparse
 import matplotlib.pyplot as plt
-import seaborn as sns
+import seaborn as sns # pip install seaborn
 sns.set_theme()
 
+# get your token at https://aqicn.org/api/
+# and replace mine here
 token="9c123e8db864c46190c95b2479c64c83127f7040"
 
 API="http://api.waqi.info/feed/{}/?token={}"
 
-city="qingdao"
+city="tokyo"
 if len(sys.argv)>1:
     city=sys.argv[1]
 
@@ -101,5 +106,6 @@ if re.status_code==200:
 else:
     print(re)
 
+print("Displaying forecast")
 plt.show()
 
