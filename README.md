@@ -2,7 +2,7 @@
  A simple python script for querying your local air quality index
 
 # Usage
-Get your API token (here)[https://aqicn.org/api/], and put it in `aqi.py` if you plan to use a lot, otherwise feel free to use mine:)
+Get your API token [here](https://aqicn.org/api/), and put it in `aqi.py` if you plan to use a lot, otherwise feel free to use mine:)
 
 run the script with
 ```
@@ -20,3 +20,4 @@ pm10: 6 Good
 Displaying forecast
 ```
 ![](aqi_demo.png)
+seems a pollution is coming to town
