@@ -1,11 +1,7 @@
 # Copyright (c) 2023 rlsn
 #
-# !pip install seaborn
 import requests
 import sys, argparse
-import matplotlib.pyplot as plt
-import seaborn as sns # pip install seaborn
-sns.set_theme()
 
 # get your token at https://aqicn.org/api/
 # and replace mine here
@@ -13,13 +9,8 @@ token="9c123e8db864c46190c95b2479c64c83127f7040"
 
 API="http://api.waqi.info/feed/{}/?token={}"
 
-city="tokyo"
-if len(sys.argv)>1:
-    city=sys.argv[1]
-
-URL = API.format(city,token)
-
-re=requests.get(URL)
+cities=["tokyo", "beijing"]
+plot_forcast = False
 
 class bcolors:
     HEADER = '\033[95m'
@@ -32,6 +23,23 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+
+def colorize(aqi, width=10):
+    color = bcolors.OKGREEN
+    if aqi<50:
+        color = bcolors.OKGREEN
+    elif aqi<100:
+        color = bcolors.WARNING
+    elif aqi<150:
+        color = bcolors.HEADER
+    elif aqi<200:
+        color = bcolors.HEADER
+    elif aqi<300:
+        color = bcolors.FAIL
+    else:
+        color = bcolors.FAIL
+
+    return ' '*(width-len(str(aqi))) + color + str(aqi) + bcolors.ENDC
 
 def classify(aqi):
     if aqi<50:
@@ -47,65 +55,45 @@ def classify(aqi):
     else:
         return bcolors.FAIL+"Harzadous"+bcolors.ENDC
 
-def print_aqi(re):
+def print_aqi(data):
+    for city in data:
+        aqi=data[city]['aqi']
+        iaqi=data[city]['iaqi']
+        print("city:",city)
+        print("AQI:",aqi,classify(aqi))
+        print("pm2.5:",iaqi['pm25']['v'], classify(iaqi['pm25']['v']))
+        print("pm10:",iaqi['pm10']['v'], classify(iaqi['pm10']['v']))   
 
-    data = re['data']
-    aqi=data['aqi']
-    iaqi=data['iaqi']
-    print("city:",city)
-    print("AQI:",aqi,classify(aqi))
-    print("pm2.5:",iaqi['pm25']['v'],classify(iaqi['pm25']['v']))
-    print("pm10:",iaqi['pm10']['v'],classify(iaqi['pm10']['v']))
+def print_table(data):
+    print(f"{'city':^20}|{'AQI':^10}|{'PM2.5':^10}|{'PM10':^10}|")
 
-    forecast=data['forecast']['daily']
-    del forecast['o3']
-    del forecast['uvi']
+    cities = sorted(data.keys(), key=lambda x:data[x]['aqi'])
+    for city in cities:
+        aqi=data[city]['aqi']
+        iaqi=data[city]['iaqi']
+        print(f"{city:^20}|{colorize(aqi,10)}|{colorize(iaqi['pm25']['v'],10)}|{colorize(iaqi['pm10']['v'],10)}|")
 
-    fig, axs = plt.subplots(1, 1, figsize=(8,6))
-    x = [d['day'][5:] for d in forecast['pm10']]
-    pm10 = [[d['avg'],d['max'],d['min']] for d in forecast['pm10']]
-    pm25 = [[d['avg'],d['max'],d['min']] for d in forecast['pm25']]
-    avg = [max(d10[0],d25[0]) for d10, d25 in zip(pm10,pm25)]
-    maxi = [max(d10[1],d25[1]) for d10, d25 in zip(pm10,pm25)]
-    mini = [max(d10[2],d25[2]) for d10, d25 in zip(pm10,pm25)]
+if __name__=="__main__":
+    if len(sys.argv)>1:
+        cities.extend(sys.argv[1].split(","))
 
-    axs.fill_between(x, maxi, mini, alpha=.5, linewidth=0)
-    axs.plot(x,avg,marker='o',label="avg")
-    axs.set_xlabel('date')
-    axs.set_ylabel('AQI')
-    axs.legend()
-    # axs.xaxis.set_tick_params(rotation=-15)
-    axs.set_title("AQI forecast")
+    data = dict()
 
-    def colorize(v):
-        if v<50:
-            return ("dimgrey","limegreen")
-        elif v<100:
-            return ("dimgrey","yellow")
-        elif v<150:
-            return ("dimgrey","darkorange")
-        elif v<200:
-            return ("lightgrey","orangered")
-        elif v<300:
-            return ("lightgrey","blueviolet")
-        else:
-            return ("lightgrey","maroon")
-
-    for i in range(len(x)):
-        axs.text(x[i], avg[i], avg[i], size=9, 
-            backgroundcolor=colorize(avg[i])[0],color=colorize(avg[i])[1])
-        axs.text(x[i], maxi[i], maxi[i], size=9, 
-            backgroundcolor=colorize(maxi[i])[0],color=colorize(maxi[i])[1])
-        axs.text(x[i], mini[i], mini[i], size=9, 
-            backgroundcolor=colorize(mini[i])[0],color=colorize(mini[i])[1])
-
-
-
-if re.status_code==200:
-    print_aqi(re.json())
-else:
-    print(re)
-
-print("Displaying forecast")
-plt.show()
+    for city in cities:
+        URL = API.format(city,token)
+        re=requests.get(URL)
+        if re.status_code!=200:
+            print(f"failed at {URL}: {re}")
+            continue
+        
+        data[city] = re.json()['data']
+    
+    if len(data)>1:
+        print_table(data)
+    else:
+        print_aqi(data)
+    if plot_forcast:
+        from plot import plot
+        plot(data)
+        
 
