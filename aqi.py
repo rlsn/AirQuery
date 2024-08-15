@@ -65,13 +65,17 @@ def print_aqi(data):
         print("pm10:",iaqi['pm10']['v'], classify(iaqi['pm10']['v']))   
 
 def print_table(data):
-    print(f"{'city':^20}|{'AQI':^10}|{'PM2.5':^10}|{'PM10':^10}|")
+    print("-"*55)
+    print(f"|{'city':^20}|{'AQI':^10}|{'PM2.5':^10}|{'PM10':^10}|")
+    print("-"*55)
 
     cities = sorted(data.keys(), key=lambda x:data[x]['aqi'])
     for city in cities:
         aqi=data[city]['aqi']
         iaqi=data[city]['iaqi']
-        print(f"{city:^20}|{colorize(aqi,10)}|{colorize(iaqi['pm25']['v'],10)}|{colorize(iaqi['pm10']['v'],10)}|")
+        print(f"|{city:^20}|{colorize(aqi,10)}|{colorize(iaqi['pm25']['v'],10)}|{colorize(iaqi['pm10']['v'],10)}|")
+    print("-"*55)
+
 
 if __name__=="__main__":
     if len(sys.argv)>1:
